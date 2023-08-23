@@ -4,9 +4,9 @@ public class CardPrice {
     private String name;
     private String state;
     private String stock;
-    private Double price;
+    private Float price;
 
-    public CardPrice(String name, String state, String stock, Double price) {
+    public CardPrice(String name, String state, String stock, Float price) {
         this.name = name;
         this.state = state;
         this.stock = stock;
@@ -25,7 +25,7 @@ public class CardPrice {
         return stock;
     }
 
-    public Double getPrice() {
+    public Float getPrice() {
         return price;
     }
 }

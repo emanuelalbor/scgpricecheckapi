@@ -8,13 +8,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+//import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.web.bind.annotation.PostMapping;
 
 
 @RestController
 public class CardPriceController {
-    @PostMapping("/price")
-    public CardPrice getPrice(@RequestParam String setCode, @RequestParam String cardNumber, @RequestParam Double dolar) {
+
+    //@Autowired
+   // private CardPrice cardPrice;
+
+    @GetMapping("/price")
+    public CardPrice getPrice(@RequestParam String setCode, @RequestParam String cardNumber, @RequestParam Float dolar) {
         try {
             // Create a URL for the Scryfall API request
             String url = "https://api.scryfall.com/cards/" + setCode + "/" + cardNumber;
@@ -37,7 +43,7 @@ public class CardPriceController {
             String estado = doc.selectFirst("span.form-option-variant").text();
             String stock = doc.select("span.stock-level").text();
             precio = precio.replace("$", "").replace(",", ".");
-            double precioDouble = Double.valueOf(precio);
+            Float precioDouble = Float.valueOf(precio);
             return new CardPrice(nombreCarta, estado,stock,precioDouble);
         }
     catch (IOException e) {
