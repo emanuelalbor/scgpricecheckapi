@@ -1,11 +1,11 @@
 package com.example;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.Scanner;
 import org.jsoup.*; 
 import org.jsoup.nodes.*; 
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,37 +14,73 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 @RestController
-public class CardPriceController {
+public class CardPriceController implements CardPriceProvider {
 
-    //@Autowired
-   // private CardPrice cardPrice;
+    private static String readTextFromUrl(String urlString) throws IOException {
+        StringBuilder response = new StringBuilder();
+        URL url = new URL(urlString);
+        
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+        }
+        
+        return response.toString();
+    }
+    private String extractCardName(String cardInfo) {
+        // Implement your logic to extract the card name from the text response
+        // Example: Assuming the card name is everything before the first {
+            int firstBraceIndex = cardInfo.indexOf('{');
+
+        if (firstBraceIndex != -1) {
+            if (cardInfo.contains("/n")){
+                return cardInfo.split("\n")[0];
+            }else{
+            return cardInfo.substring(0, firstBraceIndex).trim();}
+        } else {
+            // Handle the case where { is not found, or return the entire string if needed
+            return cardInfo.trim();
+        }
+    
+    }
+     private String buildSCGURL(String nombreCarta,String setCode,String cardNumber,Boolean foil){
+        String finish;
+        if (foil){
+            finish = "f";
+        }
+        else{
+            finish = "n";
+        }
+        String scgUrl = "https://starcitygames.com/" + nombreCarta + "-sgl-mtg-" + setCode + "-" + cardNumber + "-en" + finish + "/";
+        return scgUrl;
+     }
 
     @GetMapping("/price")
-    public CardPrice getPrice(@RequestParam String setCode, @RequestParam String cardNumber, @RequestParam Float dolar) {
+    public CardPrice getPrice(@RequestParam String setCode, @RequestParam String cardNumber, @RequestParam Float dolar,@RequestParam Boolean foil) {
         try {
-            // Create a URL for the Scryfall API request
-            String url = "https://api.scryfall.com/cards/" + setCode + "/" + cardNumber;
-            JSONObject json = readJsonFromUrl(url);
-
-            // Get the name of the card and split it by capital letters
-            String cardName = json.getString("name");
-            cardName = cardName.replaceAll(",", "-");
-            cardName = cardName.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase();
+            String apiUrl = "https://api.scryfall.com/cards/" + setCode + "/" + cardNumber + "/en?format=text";
+            String cardInfo = readTextFromUrl(apiUrl);
+            String cardName = extractCardName(cardInfo);
             String nombreCarta = cardName;
-            nombreCarta = nombreCarta.replaceAll("-", " ");
+            nombreCarta = nombreCarta.replaceAll("[,\\s]+", "-");
+            nombreCarta = nombreCarta.replaceAll(" ", "-");
+            nombreCarta = nombreCarta.replaceAll(",", "-");
+            nombreCarta = nombreCarta.replaceAll("'", "");
 
             // Create the Star City Games URL
-            String scgUrl = "https://starcitygames.com/" + cardName + "-sgl-mtg-" + setCode + "-" + cardNumber + "-enn/";
-            Document doc = Jsoup.connect(scgUrl)
+            String starcity= buildSCGURL(nombreCarta,setCode,cardNumber,foil);
+            Document doc = Jsoup.connect(starcity)
                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36") 
                 .header("Accept-Language", "*") 
                 .get();
             String precio = doc.selectFirst("span.price.price--withoutTax").text();
             String estado = doc.selectFirst("span.form-option-variant").text();
-            String stock = doc.select("span.stock-level").text();
+            String stock = doc.attr("stock-level").toString();
             precio = precio.replace("$", "").replace(",", ".");
             Float precioDouble = Float.valueOf(precio);
-            return new CardPrice(nombreCarta, estado,stock,precioDouble);
+            return new CardPrice(cardName,estado,stock,precioDouble,foil);
         }
     catch (IOException e) {
         System.out.println("Error reading URL: " + e.getMessage());
@@ -53,20 +89,9 @@ public class CardPriceController {
     }
         return null;
     }
-    private static String readUrl(String urlString) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        Scanner scanner = new Scanner(new URL(urlString).openStream());
-        while (scanner.hasNext()) {
-            sb.append(scanner.next());
-            scanner.close();
-        }
-        return sb.toString();
+    //@Override
+    public CardPrice getCardPrice(String setCode, String cardNumber, Float dolar,Boolean foil) {
+        return this.getPrice(cardNumber, cardNumber,dolar,foil);
     }
-
-    private static JSONObject readJsonFromUrl(String urlString) throws IOException, JSONException {
-        String jsonText = readUrl(urlString);
-        return new JSONObject(jsonText);
-    }
-    
-    
+ 
 }

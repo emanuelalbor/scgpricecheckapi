@@ -5,12 +5,16 @@ public class CardPrice {
     private String state;
     private String stock;
     private Float price;
+    private Boolean foil;
+    private Float pricePeso;
 
-    public CardPrice(String name, String state, String stock, Float price) {
+
+    public CardPrice(String name, String state, String stock, Float price,Boolean foil) {
         this.name = name;
         this.state = state;
         this.stock = stock;
         this.price = price;
+        this.foil = foil;
     }
 
     public String getName() {
@@ -27,5 +31,12 @@ public class CardPrice {
 
     public Float getPrice() {
         return price;
+    }
+    public Boolean isFoil() {
+        return foil;
+    }
+    public Float getPricePeso(float dolar) {
+        pricePeso = this.getPrice() * dolar;
+        return pricePeso;
     }
 }

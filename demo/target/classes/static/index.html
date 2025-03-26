@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Price Checker</title>
+</head>
+<body>
+    <h1>Card Price Checker</h1>
+    
+    <label for="setCode">Set Code:</label>
+    <input type="text" id="setCode" placeholder="Enter set code">
+
+    <label for="cardNumber">Card Number:</label>
+    <input type="number" id="cardNumber" placeholder="Enter card number">
+
+    <label for="¿Cuanto está el Dolar?">Dolar:</label>
+    <input type="number" id="dolar" placeholder="dolar">
+
+    <label for="¿es foil?">Foil:</label>
+    <input type="checkbox" id="foil">
+
+    <button onclick="getCardPrice()">Check Price</button>
+
+    <div id="result"></div>
+
+    <script>
+        function getCardPrice() {
+            const setCode = document.getElementById("setCode").value;
+            const cardNumber = document.getElementById("cardNumber").value;
+            const dolar = document.getElementById("dolar").value;
+            const foil = document.getElementById("foil").checked;
+            
+            fetch(`/price?setCode=${setCode}&cardNumber=${cardNumber}&dolar=${dolar}&foil=${foil}`)
+                .then(response => response.json())
+                .then(data => {
+                    const resultElement = document.getElementById("result");
+                    resultElement.innerHTML = `<p>Carta: ${data.name}</p><p>Precio SCG: $${data.price}</p><img src="https://api.scryfall.com/cards/${setCode}/${cardNumber}?format=image&version=normal" alt="${data.name}">`;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
